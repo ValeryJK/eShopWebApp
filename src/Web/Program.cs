@@ -1,5 +1,7 @@
-﻿using System.Net.Mime;
+﻿using System.Configuration;
+using System.Net.Mime;
 using Ardalis.ListStartupServices;
+using Azure.Identity;
 using BlazorAdmin;
 using BlazorAdmin.Services;
 using Blazored.LocalStorage;
@@ -10,12 +12,17 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.eShopWeb;
 using Microsoft.eShopWeb.ApplicationCore.Interfaces;
+using Microsoft.eShopWeb.Infrastructure.Configuration;
+using Microsoft.eShopWeb.Infrastructure.Configuration.Interfaces;
 using Microsoft.eShopWeb.Infrastructure.Data;
 using Microsoft.eShopWeb.Infrastructure.Identity;
 using Microsoft.eShopWeb.Web;
 using Microsoft.eShopWeb.Web.Configuration;
+using Microsoft.eShopWeb.Web.Extensions;
 using Microsoft.eShopWeb.Web.HealthChecks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +31,11 @@ builder.Logging.AddConsole();
 Microsoft.eShopWeb.Infrastructure.Dependencies.ConfigureServices(builder.Configuration, builder.Services);
 
 builder.Services.AddCookieSettings();
+
+
+builder.Configuration.AddAzureKeyVault(
+    new Uri("https://eshop-keyvault-2023.vault.azure.net/"),
+    new DefaultAzureCredential());
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -39,7 +51,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
                            .AddDefaultTokenProviders();
 
 builder.Services.AddScoped<ITokenClaimsService, IdentityTokenClaimService>();
-builder.Configuration.AddEnvironmentVariables();
+
 builder.Services.AddCoreServices(builder.Configuration);
 builder.Services.AddWebServices(builder.Configuration);
 
@@ -91,6 +103,13 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<HttpService>();
 builder.Services.AddBlazorServices();
+
+builder.Services.Configure<MessagingServiceConfiguration>(builder.Configuration.GetRequiredSection("ServiceBusSettings"));
+builder.Services.AddSingleton<IValidateOptions<MessagingServiceConfiguration>, MessagingServiceConfigurationValidation>();
+var messagingServiceConfiguration = builder.Services.BuildServiceProvider().GetRequiredService<IOptions<MessagingServiceConfiguration>>().Value;
+builder.Services.AddSingleton<IMessagingServiceConfiguration>(messagingServiceConfiguration);
+builder.Services.AddMessagingServices();
+
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 

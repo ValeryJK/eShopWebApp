@@ -6,4 +6,7 @@ public class BaseUrlConfiguration
 
     public string ApiBase { get; set; }
     public string WebBase { get; set; }
+    public string ApiOrdersDeliveryBackgroundUrl { get; set; }
+    public string ApiOrdersDeliveryBackgroundKey { get; set; }
+
 }
