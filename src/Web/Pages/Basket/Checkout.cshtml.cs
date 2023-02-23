@@ -81,10 +81,10 @@ public class CheckoutModel : PageModel
             await SendOrdersBackgroundsApi(_apiOrdersDeliveryBackgroundUrl, ConvertToOrderDelivery(order), 
                 _apiOrdersDeliveryBackgroundKey);
 
+            //Send order to Azure Service Bus
             var reservedOrders = order.OrderItems.Select(x => new OrderReserved { ItemId = x.ItemOrdered.CatalogItemId.ToString(), Quantity = x.Units }).ToArray();
             await _orderReservationMessagingService.PublishNewOrderMessageAsync(new OrderReservation { OrderReserved = reservedOrders });
-
-            //Send order to Azure Service Bus
+                        
             await _basketService.DeleteBasketAsync(BasketModel.Id);
         }
         catch (EmptyBasketOnCheckoutException emptyBasketOnCheckoutException)
