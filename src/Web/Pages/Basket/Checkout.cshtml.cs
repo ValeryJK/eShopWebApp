@@ -77,7 +77,7 @@ public class CheckoutModel : PageModel
             await _basketService.SetQuantities(BasketModel.Id, updateModel);
             var order = await _orderService.CreateOrderAsync(BasketModel.Id, new Address("123 Main St.", "Kent", "OH", "United States", "44240"));
 
-            //Send order to Azure Function Delivery Service
+            //Send order to Azure Function Delivery Service111
             await SendOrdersBackgroundsApi(_apiOrdersDeliveryBackgroundUrl, ConvertToOrderDelivery(order), 
                 _apiOrdersDeliveryBackgroundKey);
 
